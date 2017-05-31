@@ -1,6 +1,6 @@
 # Predix Hello ScalaJS
 
-A basic attempt to develop a web app on Predix.io using the Scala and ScalaJS.
+A basic attempt to develop a web app on Predix.io using Scala and ScalaJS.
 
 ![alt text][logo]
 
