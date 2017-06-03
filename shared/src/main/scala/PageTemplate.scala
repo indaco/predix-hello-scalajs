@@ -65,25 +65,25 @@ object HtmlTemplates {
                 )
               )
             )
-          ),
-          footer(cls := "footer",
-            div(cls := "container",
-              p(cls := "text-muted text-center",
-                s"""Running on Scala ${BuildInfo.scalaVersion}, ScalaJS ${BuildInfo.scalajsVersion},
-                Finch ${BuildInfo.finchVersion} and Finagle ${BuildInfo.finagleVersion}"""
-              ),
-              p(cls := "text-muted text-center",
-                a("Predix, Predix.io and the Predix Logo ", href := "https://www.predix.io", target := "_blank"),
-                " are ",
-                a("trademarks", href :="https://trademarks.justia.com/860/43/predix-86043990.html", target := "_blank"),
-                " of the ",
-                a("General Electric Company.", href:="http://www.ge.com/", target := "_blank")
-              ),
-              p(cls := "text-muted text-center",
-                a("Scala.js", href := "https://www.scala-js.org/", target := "_blank"),
-                " is distributed under the ",
-                a("Scala License.", href :="http://www.scala-lang.org/license.html", target := "_blank")
-              )
+          )
+        ),
+        footer(cls := "footer",
+          div(cls := "container",
+            p(cls := "text-muted text-center",
+              s"""Running on Scala ${BuildInfo.scalaVersion}, ScalaJS ${BuildInfo.scalajsVersion},
+              Finch ${BuildInfo.finchVersion} and Finagle ${BuildInfo.finagleVersion}"""
+            ),
+            p(cls := "text-muted text-center",
+              a("Predix, Predix.io and the Predix Logo ", href := "https://www.predix.io", target := "_blank"),
+              " are ",
+              a("trademarks", href :="https://trademarks.justia.com/860/43/predix-86043990.html", target := "_blank"),
+              " of the ",
+              a("General Electric Company.", href:="http://www.ge.com/", target := "_blank")
+            ),
+            p(cls := "text-muted text-center",
+              a("Scala.js", href := "https://www.scala-js.org/", target := "_blank"),
+              " is distributed under the ",
+              a("Scala License.", href :="http://www.scala-lang.org/license.html", target := "_blank")
             )
           )
         ),
