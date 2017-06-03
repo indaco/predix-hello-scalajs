@@ -1,5 +1,4 @@
 // PredixAPIService.scala
-
 package services
 
 import com.twitter.finagle.builder.ClientBuilder
@@ -18,9 +17,19 @@ import models.PredixAPI
  */
 class PredixAPIService {
 
-  val PredixAPIEndpointHost = "api.system.aws-usw02-pr.ice.predix.io"
-  val PredixAPIEndpointPort = "443"
-  val PathToCFInfo = "/v2/info"
+  private[this] val PredixAPIEndpointHost = "api.system.aws-usw02-pr.ice.predix.io"
+  private[this] val PredixAPIEndpointPort = "443"
+  private[this] val PathToCFInfo = "/v2/info"
+
+  // compose the Filter with the client:
+  private[this] val client =
+    new HandleErrors andThen
+    ClientBuilder()
+      .stack(Http.client)
+      .hosts(s"$PredixAPIEndpointHost:$PredixAPIEndpointPort")
+      .tls(PredixAPIEndpointHost)
+      .hostConnectionLimit(1)
+      .build()
 
   class InvalidRequest extends Exception
 
@@ -42,42 +51,23 @@ class PredixAPIService {
   }
 
   def call(): Future[PredixAPI] = {
-    val clientWithoutErrorHandling: Service[Request, Response] = ClientBuilder()
-      .stack(Http.client)
-      .hosts(s"$PredixAPIEndpointHost:$PredixAPIEndpointPort")
-      .tls(PredixAPIEndpointHost)
-      .hostConnectionLimit(1)
-      .build()
-
-    val handleErrors = new HandleErrors
-
-    // compose the Filter with the client:
-    val client: Service[Request, Response] = handleErrors andThen clientWithoutErrorHandling
-
-    makeRequest(client)
-  }
-
-  def makeRequest(client: Service[Request, Response]): Future[PredixAPI] = {
     val authorizedRequest = Request(Version.Http11, Method.Get, PathToCFInfo)
     val response: Future[Response] = client(authorizedRequest)
+    parsePredixResponse(response)
+  }
 
-    var values = Await.result(response.map { res: Response =>
+  private[this] def parsePredixResponse(response: Future[Response]): Future[PredixAPI] = {
+    var predixApiInfo = Await.result(response.map { res: Response =>
       val parsedJson: Json = parse(res.contentString).getOrElse(Json.Null)
       val cursor: HCursor = parsedJson.hcursor
 
-      val cfDescription = cursor.downField("description").as[String] match {
-        case Left(s) => s
-        case Right(s) => s
-      }
-
-      val cfAPIVersion = cursor.downField("api_version").as[String] match {
-        case Left(s) => s
-        case Right(s) => s
-      }
-      (cfDescription, cfAPIVersion)
+      val cfDescription = cursor.downField("description").as[String].right.getOrElse("")
+      println(cfDescription)
+      val cfAPIVersion = cursor.downField("api_version").as[String].right.getOrElse("")
+      PredixAPI(cfDescription, cfAPIVersion)
     })
 
-    Future(PredixAPI(values._1.toString, values._2.toString))
+    Future(predixApiInfo)
   }
 
 }
