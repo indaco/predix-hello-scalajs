@@ -6,6 +6,7 @@ import com.twitter.finagle.{Http, Service, SimpleFilter}
 import com.twitter.finagle.http.{Request, Response, Status, Version, Method}
 import com.twitter.util.{Await, Future}
 import io.circe._, io.circe.parser._
+import io.circe.parser.decode, io.circe.generic.semiauto._
 
 import models.PredixAPI
 /*
@@ -20,6 +21,9 @@ class PredixAPIService {
   private[this] val PredixAPIEndpointHost = "api.system.aws-usw02-pr.ice.predix.io"
   private[this] val PredixAPIEndpointPort = "443"
   private[this] val PathToCFInfo = "/v2/info"
+
+  implicit val decodePredixAPi: Decoder[PredixAPI] =
+    Decoder.forProduct2("description", "api_version")(PredixAPI.apply)
 
   // compose the Filter with the client:
   private[this] val client =
@@ -53,20 +57,13 @@ class PredixAPIService {
   def call(): Future[PredixAPI] = {
     val authorizedRequest = Request(Version.Http11, Method.Get, PathToCFInfo)
     val response: Future[Response] = client(authorizedRequest)
-    parsePredixResponse(response)
+    decodeResponse(response)
   }
 
-  private[this] def parsePredixResponse(response: Future[Response]): Future[PredixAPI] = {
+  private[this] def decodeResponse(response: Future[Response]): Future[PredixAPI] = {
     var predixApiInfo = Await.result(response.map { res: Response =>
-      val parsedJson: Json = parse(res.contentString).getOrElse(Json.Null)
-      val cursor: HCursor = parsedJson.hcursor
-
-      val cfDescription = cursor.downField("description").as[String].right.getOrElse("")
-      println(cfDescription)
-      val cfAPIVersion = cursor.downField("api_version").as[String].right.getOrElse("")
-      PredixAPI(cfDescription, cfAPIVersion)
+      decode(res.contentString).toOption.get
     })
-
     Future(predixApiInfo)
   }
 
